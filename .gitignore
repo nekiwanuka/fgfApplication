@@ -1,1 +1,55 @@
-.venv
+# Virtual Environment
+venv/
+.venv/
+
+# Environment Variables
+.env
+
+# Python Bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Django Specific
+db.sqlite3
+*.sqlite3
+media/
+staticfiles/
+*.log
+
+# IDE Configurations
+.idea/
+.vscode/
+*.iml
+
+# Build Files
+build/
+dist/
+*.egg-info/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test Coverage
+coverage/
+*.coverage
+*.lcov
+
+# Docker
+*.pid
+*.sock
+
+# Node Modules (if applicable)
+node_modules/
+
+# Backup Files
+*.bak
+*.swp
+*.tmp
+*.old
