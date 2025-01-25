@@ -1,4 +1,4 @@
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions, viewsets
@@ -9,11 +9,12 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .models import CustomUser
+from .models import FgfUser
 from .serializers import UserSerializer, ContributorRegistrationSerializer
 from rest_framework.decorators import action
 from django.contrib.sites.shortcuts import get_current_site
 from django.views import View
+from django.http import HttpResponse
 
 
 # Utility to send verification email
@@ -41,7 +42,7 @@ class UserViewSet(viewsets.ViewSet):
 
     def list(self, request):
         if request.user.is_superuser:
-            users = CustomUser.objects.filter(is_active=True)
+            users = FgfUser.objects.filter(is_active=True)
             serializer = UserSerializer(users, many=True)
             return Response(serializer.data)
         return Response({"error": "You must be a superuser to view all users."}, status=status.HTTP_403_FORBIDDEN)
@@ -54,7 +55,7 @@ class UserViewSet(viewsets.ViewSet):
         if not email or not password:
             return Response({"error": "Email and password are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = CustomUser.objects.create_user(email=email, password=password, is_editor=True)
+        user = FgfUser.objects.create_user(email=email, password=password, is_editor=True)
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -64,8 +65,8 @@ class VerifyEmailView(APIView):
 
     def get(self, request, pk, token, *args, **kwargs):
         try:
-            user = CustomUser.objects.get(pk=pk)
-        except CustomUser.DoesNotExist:
+            user = FgfUser.objects.get(pk=pk)
+        except FgfUser.DoesNotExist:
             return Response({'detail': 'Invalid user.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if default_token_generator.check_token(user, token):
@@ -154,3 +155,12 @@ class VerifyEmailRedirectView(View):
         # Logic to verify the email
         # ...existing verification logic...
         return redirect('login')
+
+def verify_email(request, user_id, token):
+    user = get_object_or_404(FgfUser, pk=user_id)
+    if default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+        return HttpResponse('Email verified successfully.')
+    else:
+        return HttpResponse('Invalid verification link.', status=400)

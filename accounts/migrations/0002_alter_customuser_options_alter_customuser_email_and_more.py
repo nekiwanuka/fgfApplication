@@ -11,16 +11,16 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterModelOptions(
-            name='customuser',
+            name='fgfuser',
             options={'verbose_name': 'User', 'verbose_name_plural': 'Users'},
         ),
         migrations.AlterField(
-            model_name='customuser',
+            model_name='fgfuser',
             name='email',
             field=models.EmailField(db_index=True, max_length=254, unique=True),
         ),
         migrations.AlterField(
-            model_name='customuser',
+            model_name='fgfuser',
             name='gender',
             field=models.CharField(blank=True, choices=[('male', 'Male'), ('female', 'Female')], max_length=10, null=True),
         ),
