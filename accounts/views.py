@@ -15,6 +15,7 @@ from rest_framework.decorators import action
 from django.contrib.sites.shortcuts import get_current_site
 from django.views import View
 from django.http import HttpResponse
+from rest_framework.permissions import IsAdminUser
 
 
 # Utility to send verification email
@@ -43,11 +44,15 @@ class UserViewSet(viewsets.ViewSet):
     def list(self, request):
         if request.user.is_superuser:
             users = FgfUser.objects.filter(is_active=True)
-            serializer = UserSerializer(users, many=True)
-            return Response(serializer.data)
-        return Response({"error": "You must be a superuser to view all users."}, status=status.HTTP_403_FORBIDDEN)
+        elif request.user.is_editor:
+            users = FgfUser.objects.filter(is_active=True, is_contributor=True)
+        else:
+            return Response({"error": "You must be a superuser or editor to view users."}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
 
-    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUser | permissions.IsAuthenticated])
     def create_editor(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
@@ -59,13 +64,35 @@ class UserViewSet(viewsets.ViewSet):
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUser | permissions.IsAuthenticated])
+    def create_contributor(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        if not email or not password:
+            return Response({"error": "Email and password are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = FgfUser.objects.create_user(email=email, password=password, is_contributor=True)
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def list_contributors(self, request):
+        contributors = FgfUser.objects.filter(is_contributor=True, is_verified=True)
+        serializer = UserSerializer(contributors, many=True)
+        return Response(serializer.data)
+
+    def list_editors(self, request):
+        editors = FgfUser.objects.filter(is_editor=True)
+        serializer = UserSerializer(editors, many=True)
+        return Response(serializer.data)
+
 # Email Verification View
 class VerifyEmailView(APIView):
     permission_classes = [permissions.AllowAny]
 
-    def get(self, request, pk, token, *args, **kwargs):
+    def get(self, request, user_id, token, *args, **kwargs):
         try:
-            user = FgfUser.objects.get(pk=pk)
+            user = FgfUser.objects.get(pk=user_id)
         except FgfUser.DoesNotExist:
             return Response({'detail': 'Invalid user.'}, status=status.HTTP_400_BAD_REQUEST)
 
