@@ -21,7 +21,7 @@ from rest_framework.permissions import IsAdminUser
 # Utility to send verification email
 def send_verification_email(request, user):
     token = default_token_generator.make_token(user)  # Use Django's default token generator
-    relative_link = reverse('verify-email', args=[user.pk, token])
+    relative_link = reverse('verify_email', args=[user.pk, token])
     domain = get_current_site(request).domain
     full_link = f"http://{domain}{relative_link}"
 
@@ -185,9 +185,10 @@ class VerifyEmailRedirectView(View):
 
 def verify_email(request, user_id, token):
     user = get_object_or_404(FgfUser, pk=user_id)
-    if default_token_generator.check_token(user, token):
-        user.is_active = True
+    # Add your token verification logic here
+    if token == user.verification_token:  # Example token check
+        user.is_verified = True
         user.save()
-        return HttpResponse('Email verified successfully.')
+        return HttpResponse("Email verified successfully.")
     else:
-        return HttpResponse('Invalid verification link.', status=400)
+        return HttpResponse("Invalid verification token.")

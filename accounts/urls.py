@@ -22,7 +22,7 @@ auth_patterns = [
 
 # Email Verification URLs
 email_verification_patterns = [
-    path('auth/verify-email/<int:user_id>/<str:token>/', VerifyEmailView.as_view(), name='verify-email'),  # Updated this line
+    path('auth/verify-email/<int:user_id>/<str:token>/', VerifyEmailView.as_view(), name='verify_email'),  # Updated this line
     path('auth/verify-email-redirect/', VerifyEmailRedirectView.as_view(), name='verify_email_redirect'),
 ]
 
