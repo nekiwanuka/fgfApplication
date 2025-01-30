@@ -63,3 +63,10 @@ class FgfUser(AbstractUser):
 
     def __str__(self):
         return f"{self.email} ({self.first_name} {self.last_name})"
+    
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(FgfUser, on_delete=models.CASCADE)
+    proffession = models.CharField(max_length=100)
+    def __str__(self):
+        return f'{self.user.email} - UserProfile'

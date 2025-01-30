@@ -9,13 +9,16 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .models import FgfUser
-from .serializers import UserSerializer, ContributorRegistrationSerializer
+from .models import FgfUser, UserProfile
+from .serializers import UserSerializer, ContributorRegistrationSerializer, UserProfileSerializer
 from rest_framework.decorators import action
 from django.contrib.sites.shortcuts import get_current_site
 from django.views import View
 from django.http import HttpResponse
 from rest_framework.permissions import IsAdminUser
+from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework import generics
+from .serializers import FgfUserSerializer, UserProfileSerializer
 
 
 # Utility to send verification email
@@ -192,3 +195,29 @@ def verify_email(request, user_id, token):
         return HttpResponse("Email verified successfully.")
     else:
         return HttpResponse("Invalid verification token.")
+
+# Profile View
+
+class UserProfileView(RetrieveUpdateAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.profile
+
+class FgfUserListCreateView(generics.ListCreateAPIView):
+    queryset = FgfUser.objects.all()
+    serializer_class = FgfUserSerializer
+
+class FgfUserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = FgfUser.objects.all()
+    serializer_class = FgfUserSerializer
+
+class ProfileListCreateView(generics.ListCreateAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+
+class ProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer

@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     UserViewSet, LoginView, LogoutView, PasswordChangeView, VerifyEmailView,
-    ContributorRegistrationView, PasswordResetVerifyView, VerifyEmailRedirectView,
+    ContributorRegistrationView, PasswordResetVerifyView, VerifyEmailRedirectView, UserProfileView,
+    FgfUserListCreateView, FgfUserDetailView, ProfileListCreateView, ProfileDetailView
 )
 
 # Router setup for UserViewSet
@@ -18,6 +19,7 @@ auth_patterns = [
     path('auth/signup/', ContributorRegistrationView.as_view(), name='signup'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/password/change/', PasswordChangeView.as_view(), name='password_change'),
+    path('auth/profile/', UserProfileView.as_view(), name='profile'),
 ]
 
 # Email Verification URLs
@@ -31,10 +33,19 @@ password_reset_patterns = [
     path('auth/password-reset-verify/<str:uidb64>/<str:token>/', PasswordResetVerifyView.as_view(), name='password_reset_verify'),
 ]
 
+# FgfUser and Profile URLs
+fgf_user_profile_patterns = [
+    path('users/', FgfUserListCreateView.as_view(), name='user-list-create'),
+    path('users/<int:pk>/', FgfUserDetailView.as_view(), name='user-detail'),
+    path('userprofiles/', ProfileListCreateView.as_view(), name='user-profile-list-create'),
+    path('userprofiles/<int:pk>/', ProfileDetailView.as_view(), name='user-profile-detail'),
+]
+
 # Combine all URL patterns
 urlpatterns = [
     path('', include(router.urls)),  # UserViewSet endpoints
     *auth_patterns,
     *email_verification_patterns,
     *password_reset_patterns,
+    *fgf_user_profile_patterns,
 ]

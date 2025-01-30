@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.core.mail import send_mail, BadHeaderError
 from django.core.exceptions import ValidationError
 import re
-from .models import FgfUser
+from .models import FgfUser, UserProfile
 
 # Utility function for sending emails
 def send_email(recipient_email, subject, message):
@@ -69,11 +69,25 @@ class UserSerializer(serializers.ModelSerializer):
 
 # Custom User Serializer
 class FgfUserSerializer(serializers.ModelSerializer):
-    phone_number = serializers.CharField(validators=[validate_phone_number])
-
     class Meta:
         model = FgfUser
         fields = [
             'id', 'email', 'first_name', 'last_name', 'date_of_birth', 'gender',
-            'location', 'phone_number', 'is_editor', 'is_contributor', 'is_active',
+            'location', 'phone_number', 'is_editor', 'is_contributor', 'is_active', 'is_verified'
         ]
+        ref_name = 'AccountsFgfUser'  # Add this line to set a unique ref_name
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    user = FgfUserSerializer()
+
+    class Meta:
+        model = UserProfile
+        fields = ['user', 'proffession']
+
+# class UserProfileModelSerializer(serializers.ModelSerializer):
+#     FgfUseruser = UserSerializer()
+
+#     class Meta:
+#         model = Profile
+#         fields = ('email', 'first_name', 'last_name', 'date_of_birth', 'gender',
+# 'location', 'phone_number')
