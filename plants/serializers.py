@@ -21,12 +21,39 @@ class PlantSerializer(serializers.ModelSerializer):
         model = Plant
         fields = '__all__'
 
+    def to_representation(self, instance):
+        # Get the original serialized data
+        representation = super().to_representation(instance)
+        
+        # Get the request context (used to check user role)
+        request = self.context.get('request')
+
+        # If the user is a contributor, exclude the 'status' field from the response
+        if request and request.user and not request.user.is_staff:  # Contributor check
+            representation.pop('status', None)  # Exclude the status field from the response
+
+        return representation
+
     def create(self, validated_data):
-        plant_name_data = validated_data.pop('plant_names', [])
-        plant = Plant.objects.create(**validated_data)
+        # Automatically set the 'status' field to 'draft' when creating a new plant
+        validated_data['status'] = 'draft'  # Set default status for new entries
+        plant_name_data = validated_data.pop('plant_names', [])  # Get the plant_names from validated data
+        plant = Plant.objects.create(**validated_data)  # Create the plant object
+        
+        # Create PlantLocalName instances for each plant name provided
         for name_data in plant_name_data:
             PlantLocalName.objects.create(plant=plant, **name_data)
+        
         return plant
+
+    def update(self, instance, validated_data):
+        # If the user is a contributor, ensure restricted fields like 'status' cannot be updated
+        request = self.context.get('request')
+        if request and request.user and not request.user.is_staff:
+            validated_data.pop('status', None)  # Ensure status cannot be modified by contributors
+        
+        # Call the parent update method to update the instance
+        return super().update(instance, validated_data)
 
 class MedicinalPlantNameSerializer(serializers.ModelSerializer):
     class Meta:

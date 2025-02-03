@@ -1,6 +1,7 @@
 from django.db import models
 from accounts.models import FgfUser
 from django.utils import timezone
+from fgfplatform.constants import STATUS_CHOICES
 
 LIFE_FORM_CHOICES = [
     ("forest", "Forest"),
@@ -40,6 +41,7 @@ class Plant(models.Model):
     contributor = models.ForeignKey(FgfUser, on_delete=models.CASCADE, related_name='plants', null=True, blank=True)
     date_added = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
 
     def __str__(self):
      return f"Plant: {self.english_name} (Contributed by: {self.contributor.first_name} {self.contributor.last_name} - {self.contributor.email})"

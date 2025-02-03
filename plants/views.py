@@ -6,11 +6,18 @@ from accounts.permissions import IsSuperUser, IsEditorOrSuperUser, IsContributor
 class PlantViewSet(viewsets.ModelViewSet):
     queryset = Plant.objects.all()
     serializer_class = PlantSerializer
-    permission_classes = [IsContributorOrReadOnly]
-    
+    permission_classes = [IsContributorOrReadOnly]  # Ensures contributors can only read or create
+        
     def perform_create(self, serializer):
-        # Automatically associate the plant with the logged-in user
+        # Automatically associate the plant with the logged-in user (contributor)
         serializer.save(contributor=self.request.user)
+
+    def perform_update(self, serializer):
+        # Contributors should not be able to update certain fields like 'status'
+        if not self.request.user.is_staff:  # Check if the user is not a staff member
+            # Ensure restricted fields (like 'status') cannot be modified
+            serializer.validated_data.pop('status', None)
+        super().perform_update(serializer)
 
 class MedicinalPlantViewSet(viewsets.ModelViewSet):
     queryset = MedicinalPlant.objects.all()

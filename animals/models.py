@@ -2,6 +2,7 @@ from django.db import models
 from accounts.models import FgfUser
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from fgfplatform.constants import STATUS_CHOICES
 
 
 
@@ -21,13 +22,7 @@ class AnimalClassification(models.Model):
 
 
 class AnimalProfile(models.Model):
-    STATUS_CHOICES = [
-        ('draft', 'Draft'),
-        ('pending', 'Pending Review'),
-        ('approved', 'Approved'),
-        ('published', 'Published'),
-        ('rejected', 'Rejected'),
-    ]
+
 
     animal_id = models.BigAutoField(primary_key=True)
     english_name = models.CharField(max_length=250)
@@ -62,6 +57,7 @@ class AnimalProfile(models.Model):
     review_feedback = models.TextField(blank=True, null=True)
     date_entered = models.DateTimeField(auto_now_add=True)
     contributors = models.ManyToManyField(FgfUser, blank=True, related_name='contributed_animals')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
 
     def __str__(self):
         return f"{self.english_name} ({self.scientific_name})"

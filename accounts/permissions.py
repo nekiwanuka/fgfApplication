@@ -46,13 +46,14 @@ class IsViewerOrSuperUser(permissions.BasePermission):
 class IsContributorOrReadOnly(permissions.BasePermission):
     """
     Custom permission to only allow contributors to post and get, but not update or delete.
+    Also ensures contributors cannot modify fields like 'status'.
     """
     def has_permission(self, request, view):
         # Allow read-only access for any request
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # Allow POST requests for authenticated users
+        # Allow POST requests for authenticated users (contributors)
         if request.method == 'POST' and request.user.is_authenticated:
             return True
 
@@ -72,5 +73,9 @@ class IsContributorOrReadOnly(permissions.BasePermission):
         if request.user.is_authenticated and (request.user.is_superuser or request.user.groups.filter(name='Editors').exists()):
             return True
 
-        # Deny access for other methods
-        return False
+        # Deny access for other methods (contributors can't update or delete)
+        if request.method in ['PUT', 'PATCH', 'DELETE']:
+            return False
+
+        # Allow POST and GET methods for contributors
+        return True
