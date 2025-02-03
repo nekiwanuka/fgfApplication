@@ -1,7 +1,8 @@
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from accounts.models import FgfUser
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+
 
 
 class AnimalClassification(models.Model):
@@ -62,7 +63,6 @@ class AnimalProfile(models.Model):
     date_entered = models.DateTimeField(auto_now_add=True)
     contributors = models.ManyToManyField(FgfUser, blank=True, related_name='contributed_animals')
 
-
     def __str__(self):
         return f"{self.english_name} ({self.scientific_name})"
 
@@ -95,7 +95,9 @@ class AnimalLocalName(models.Model):
 
 
 
-class AnimalEntryCounter(models.Model):
+# Entry counter to track the number of entries for each model
+class EntryCounter(models.Model):
+    model_name = models.CharField(max_length=100, unique=True)
     total_entries = models.PositiveIntegerField(default=0)
 
     def increment(self):
@@ -108,14 +110,26 @@ class AnimalEntryCounter(models.Model):
             self.save()
 
     def __str__(self):
-        return f"Total Entries: {self.total_entries}"
+        return f"{self.model_name} Total Entries: {self.total_entries}"
 
+# Helper function for counter updates
+def update_entry_counter(model_name, increment=True):
+    counter, _ = EntryCounter.objects.get_or_create(model_name=model_name)
+    if increment:
+        counter.increment()
+    else:
+        counter.decrement()
 
-# Signal Handlers to Automatically Increment Counter on Save
+# Signal Handlers to Automatically Increment and Decrement Counters
 @receiver(post_save, sender=AnimalProfile)
 @receiver(post_save, sender=AnimalClassification)
 @receiver(post_save, sender=AnimalLocalName)
-def increment_animal_entry_counter(sender, instance, created, **kwargs):
+def increment_entry_counter(sender, instance, created, **kwargs):
     if created:
-        counter, _ = AnimalEntryCounter.objects.get_or_create(id=1)
-        counter.increment()
+        update_entry_counter(sender.__name__, increment=True)
+
+@receiver(post_delete, sender=AnimalProfile)
+@receiver(post_delete, sender=AnimalClassification)
+@receiver(post_delete, sender=AnimalLocalName)
+def decrement_entry_counter(sender, instance, **kwargs):
+    update_entry_counter(sender.__name__, increment=False)

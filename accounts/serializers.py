@@ -82,7 +82,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ['user', 'proffession']
+        fields = ['user', 'proffession','first_name', 'last_name', 'date_of_birth']
 
 # class UserProfileModelSerializer(serializers.ModelSerializer):
 #     FgfUseruser = UserSerializer()

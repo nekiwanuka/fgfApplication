@@ -68,5 +68,8 @@ class FgfUser(AbstractUser):
 class UserProfile(models.Model):
     user = models.OneToOneField(FgfUser, on_delete=models.CASCADE)
     proffession = models.CharField(max_length=100)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
+    date_of_birth = models.DateField(null=True, blank=True)
     def __str__(self):
         return f'{self.user.email} - UserProfile'

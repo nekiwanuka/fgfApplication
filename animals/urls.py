@@ -1,18 +1,12 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import (
-    AnimalClassificationViewSet,
-    AnimalProfileViewSet,
-    AnimalLocalNameViewSet,
-    AnimalEntryCounterViewSet
-)
+from .views import AnimalProfileViewSet, AnimalClassificationViewSet, AnimalLocalNameViewSet, EntryCounterViewSet
 
-# Create a router and register all viewsets
 router = DefaultRouter()
-router.register(r'animal-classifications', AnimalClassificationViewSet, basename='animal-classification')
-router.register(r'animal-profiles', AnimalProfileViewSet, basename='animal-profile')
-router.register(r'animal-local-names', AnimalLocalNameViewSet, basename='animal-local-name')
-router.register(r'animal-entry-counters', AnimalEntryCounterViewSet, basename='animal-entry-counter')  # New route
+router.register(r'animalprofiles', AnimalProfileViewSet)
+router.register(r'animalclassifications', AnimalClassificationViewSet)
+router.register(r'animallocalnames', AnimalLocalNameViewSet)
+router.register(r'entrycounters', EntryCounterViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
