@@ -1,86 +1,94 @@
-from rest_framework import viewsets, permissions, filters
-from drf_yasg.utils import swagger_auto_schema
-from .models import Plant, MedicinalPlant, PlantLocalName, PlantImageGallery, MedicinalPlantImageGallery, PlantVideoGallery
-from .serializers import PlantSerializer, MedicinalPlantSerializer, PlantNameSerializer, PlantImageGallerySerializer, MedicinalPlantImageGallerySerializer, PlantVideoGallerySerializer
-from accounts.permissions import IsSuperUser, IsEditorOrSuperUser, IsContributorOrReadOnly
+from rest_framework import viewsets, status, filters
+from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
+from accounts.permissions import IsContributorOrReadOnly, IsEditorOrSuperUser
+from .models import (
+    Plant, PlantLocalName, Language, MedicinalPlant, PlantImageGallery,
+    PlantVideoGallery, scientificClassification
+)
+from .serializers import (
+    PlantSerializer, PlantLocalNameSerializer, LanguageSerializer,
+    MedicinalPlantSerializer, PlantImageGallerySerializer,
+    PlantVideoGallerySerializer, scientificClassificationSerializer
+)
+
 
 class PlantViewSet(viewsets.ModelViewSet):
     queryset = Plant.objects.all()
     serializer_class = PlantSerializer
     permission_classes = [IsContributorOrReadOnly]
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    search_fields = ['scientific_name', 'english_name', 'distribution_in_Uganda', 'unique_habitat']
-    ordering_fields = ['scientific_name', 'english_name', 'date_added']
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['english_name', 'scientific_name', 'life_form', 'status', 'contributor']
 
-    @swagger_auto_schema(tags=['Plants'])
     def perform_create(self, serializer):
-        # Automatically associate the plant with the logged-in user (contributor)
         serializer.save(contributor=self.request.user)
 
-    @swagger_auto_schema(tags=['Plants'])
-    def perform_update(self, serializer):
-        # Contributors should not be able to update certain fields like 'status'
-        if not self.request.user.is_staff:  # Check if the user is not a staff member
-            # Ensure restricted fields (like 'status') cannot be modified
-            serializer.validated_data.pop('status', None)
-        super().perform_update(serializer)
+class LanguageViewSet(viewsets.ModelViewSet):
+    queryset = Language.objects.all()
+    serializer_class = LanguageSerializer
+    permission_classes = [IsContributorOrReadOnly]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['name']
+    search_fields = ['name']
+    ordering_fields = ['name']
+
+class PlantLocalNameViewSet(viewsets.ModelViewSet):
+    queryset = PlantLocalName.objects.all()
+    serializer_class = PlantLocalNameSerializer
+    permission_classes = [IsContributorOrReadOnly]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['plant', 'language', 'local_name']
+    search_fields = ['local_name']
+    ordering_fields = ['local_name']
+
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        plant = serializer.validated_data['plant']
+        language = serializer.validated_data['language']
+        local_name = serializer.validated_data['local_name']
+
+        if PlantLocalName.objects.filter(plant=plant, language=language, local_name=local_name).exists():
+            return Response({'error': 'This local name already exists for this plant in the given language.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class MedicinalPlantViewSet(viewsets.ModelViewSet):
     queryset = MedicinalPlant.objects.all()
     serializer_class = MedicinalPlantSerializer
     permission_classes = [IsContributorOrReadOnly]
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    search_fields = ['plant__scientific_name', 'plant__english_name', 'health_issues']
-    ordering_fields = ['plant__scientific_name', 'plant__english_name']
-
-    @swagger_auto_schema(tags=['Medicinal Plants'])
-    def perform_create(self, serializer):
-        serializer.save(contributor=self.request.user)
-
-class PlantNameViewSet(viewsets.ModelViewSet):
-    queryset = PlantLocalName.objects.all()
-    serializer_class = PlantNameSerializer
-    permission_classes = [IsContributorOrReadOnly]
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    search_fields = ['local_name', 'language', 'plant__scientific_name', 'plant__english_name']
-    ordering_fields = ['local_name', 'language']
-
-    @swagger_auto_schema(tags=['Plant Names'])
-    def perform_create(self, serializer):
-        serializer.save(contributor=self.request.user)
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['plant', 'health_issues', 'part_used', 'shelf_life', 'contributor']
+    search_fields = ['health_issues', 'cultural_value', 'contraindications', 'preparation_steps']
+    ordering_fields = ['shelf_life', 'created_at']
 
 class PlantImageGalleryViewSet(viewsets.ModelViewSet):
     queryset = PlantImageGallery.objects.all()
     serializer_class = PlantImageGallerySerializer
-    permission_classes = [IsEditorOrSuperUser]
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    search_fields = ['plant__scientific_name', 'plant__english_name', 'caption']
-    ordering_fields = ['plant__scientific_name', 'plant__english_name']
-
-    @swagger_auto_schema(tags=['Plant Image Gallery'])
-    def perform_create(self, serializer):
-        serializer.save(contributor=self.request.user)
-
-class MedicinalPlantImageGalleryViewSet(viewsets.ModelViewSet):
-    queryset = MedicinalPlantImageGallery.objects.all()
-    serializer_class = MedicinalPlantImageGallerySerializer
-    permission_classes = [IsEditorOrSuperUser]
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    search_fields = ['medicinal_plant__plant__scientific_name', 'medicinal_plant__plant__english_name', 'caption']
-    ordering_fields = ['medicinal_plant__plant__scientific_name', 'medicinal_plant__plant__english_name']
-
-    @swagger_auto_schema(tags=['Medicinal Plant Image Gallery'])
-    def perform_create(self, serializer):
-        serializer.save(contributor=self.request.user)
+    permission_classes = [IsContributorOrReadOnly]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['plant']
+    search_fields = ['description']
+    ordering_fields = ['created_at']
 
 class PlantVideoGalleryViewSet(viewsets.ModelViewSet):
     queryset = PlantVideoGallery.objects.all()
     serializer_class = PlantVideoGallerySerializer
     permission_classes = [IsEditorOrSuperUser]
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    search_fields = ['plant__scientific_name', 'plant__english_name', 'caption']
-    ordering_fields = ['plant__scientific_name', 'plant__english_name']
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['plant']
+    search_fields = ['description']
+    ordering_fields = ['created_at']
 
-    @swagger_auto_schema(tags=['Plant Video Gallery'])
-    def perform_create(self, serializer):
-        serializer.save(contributor=self.request.user)
+
+class scientificClassificationViewSet(viewsets.ModelViewSet):
+    queryset = scientificClassification.objects.all()
+    serializer_class = scientificClassificationSerializer
+    permission_classes = [IsContributorOrReadOnly]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['kingdom', 'order', 'family', 'genus', 'species']
+    search_fields = ['kingdom', 'order', 'family', 'genus', 'species']
+    ordering_fields = ['kingdom', 'order', 'family', 'genus', 'species']

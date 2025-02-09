@@ -1,10 +1,12 @@
+from requests import Response, request
+from rest_framework import status
 from rest_framework import viewsets, filters
 from .models import AnimalProfile, AnimalClassification, AnimalLocalName, EntryCounter
 from .serializers import AnimalProfileSerializer, AnimalClassificationSerializer, AnimalLocalNameSerializer, EntryCounterSerializer
-from accounts.permissions import IsContributorOrReadOnly, IsContributor, IsEditorOrSuperUser
+from accounts.permissions import IsContributorOrReadOnly, IsEditorOrSuperUser
 
 class AnimalProfileViewSet(viewsets.ModelViewSet):
-    queryset = AnimalProfile.objects.all()
+    queryset = AnimalProfile.objects.all()  # Removed soft delete filter
     serializer_class = AnimalProfileSerializer
     permission_classes = [IsContributorOrReadOnly]
     filter_backends = [filters.OrderingFilter, filters.SearchFilter]
@@ -12,19 +14,25 @@ class AnimalProfileViewSet(viewsets.ModelViewSet):
     ordering_fields = ['english_name', 'scientific_name', 'date_entered']
 
     def perform_create(self, serializer):
-        # Ensure 'status' is automatically set to 'draft' when creating a new AnimalProfile instance
         serializer.save(status='draft')
 
+        user = self.request.user
+        serializer = AnimalProfileSerializer(data=self.request.data)
+        if serializer.is_valid():
+            serializer.save(contributor=user)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class AnimalClassificationViewSet(viewsets.ModelViewSet):
-    queryset = AnimalClassification.objects.all()
+    queryset = AnimalClassification.objects.all()  # Removed soft delete filter
     serializer_class = AnimalClassificationSerializer
-    permission_classes = [IsContributor]
+    permission_classes = [IsContributorOrReadOnly]
     filter_backends = [filters.OrderingFilter, filters.SearchFilter]
     search_fields = ['kingdom_name', 'species', 'animal_class', 'order']
     ordering_fields = ['kingdom_name', 'species', 'animal_class']
 
 class AnimalLocalNameViewSet(viewsets.ModelViewSet):
-    queryset = AnimalLocalName.objects.all()
+    queryset = AnimalLocalName.objects.all()  # Removed soft delete filter
     serializer_class = AnimalLocalNameSerializer
     permission_classes = [IsContributorOrReadOnly]
     filter_backends = [filters.OrderingFilter, filters.SearchFilter]

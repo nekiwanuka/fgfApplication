@@ -1,14 +1,19 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import PlantViewSet, MedicinalPlantViewSet, PlantNameViewSet, PlantImageGalleryViewSet, MedicinalPlantImageGalleryViewSet, PlantVideoGalleryViewSet
+from .views import (
+    PlantViewSet, PlantLocalNameViewSet, LanguageViewSet, MedicinalPlantViewSet,
+    PlantImageGalleryViewSet, PlantVideoGalleryViewSet,
+    scientificClassificationViewSet
+)
 
 router = DefaultRouter()
-router.register(r'plants', PlantViewSet, basename='plant')
-router.register(r'medicinal-plants', MedicinalPlantViewSet, basename='medicinal-plant')
-router.register(r'plant-names', PlantNameViewSet, basename='plant-name')
-router.register(r'plant-image-gallery', PlantImageGalleryViewSet, basename='plant-image-gallery')
-router.register(r'medicinal-plant-image-gallery', MedicinalPlantImageGalleryViewSet, basename='medicinal-plant-image-gallery')
-router.register(r'plant-video-gallery', PlantVideoGalleryViewSet, basename='plant-video-gallery')
+router.register(r'plants', PlantViewSet)
+router.register(r'plant-local-names', PlantLocalNameViewSet)
+router.register(r'languages', LanguageViewSet)
+router.register(r'medicinal-plants', MedicinalPlantViewSet)
+router.register(r'plant-images', PlantImageGalleryViewSet)
+router.register(r'plant-videos', PlantVideoGalleryViewSet)
+router.register(r'scientific-clarifications', scientificClassificationViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

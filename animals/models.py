@@ -2,9 +2,8 @@ from django.db import models
 from accounts.models import FgfUser
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from fgfplatform import settings
 from fgfplatform.constants import STATUS_CHOICES
-
-
 
 class AnimalClassification(models.Model):
     animal_classification_id = models.AutoField(primary_key=True)
@@ -15,15 +14,16 @@ class AnimalClassification(models.Model):
     order = models.CharField(max_length=250)
     domestic = models.BooleanField(default=False)
     wild_animal = models.BooleanField(default=False)
-    contributors = models.ManyToManyField(FgfUser, blank=True, related_name='contributed_animal_classifications')
-
+    contributors = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='contributed_animal_classifications',blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    review_feedback = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    published_date = models.DateTimeField(blank=True, null=True)
     def __str__(self):
         return f"{self.animal_class} ({self.kingdom_name})"
 
-
 class AnimalProfile(models.Model):
-
-
     animal_id = models.BigAutoField(primary_key=True)
     english_name = models.CharField(max_length=250)
     scientific_name = models.CharField(max_length=250)
@@ -52,16 +52,15 @@ class AnimalProfile(models.Model):
     image = models.ImageField(upload_to="animal_images", null=True, blank=True)
     video = models.FileField(upload_to="animal_videos", null=True, blank=True)
     audio = models.FileField(upload_to="animal_audios", null=True, blank=True)
-    citation = models.TextField(blank=True, null=True)
+    citation = models.TextField(blank=True, null=True) 
+    contributors = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='contributed_animals',blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     review_feedback = models.TextField(blank=True, null=True)
-    date_entered = models.DateTimeField(auto_now_add=True)
-    contributors = models.ManyToManyField(FgfUser, blank=True, related_name='contributed_animals')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
-
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    published_date = models.DateTimeField(blank=True, null=True)
     def __str__(self):
         return f"{self.english_name} ({self.scientific_name})"
-
 
 class AnimalLocalName(models.Model):
     animal_local_name_id = models.AutoField(primary_key=True)
@@ -74,12 +73,7 @@ class AnimalLocalName(models.Model):
         null=True,
         help_text="The animal associated with this local name."
     )
-    contributor = models.ForeignKey(
-        FgfUser,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='local_name_contributions',
+    contributor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name='local_name_contributions',null=True,
         help_text="Contributor who added this local name."
     )
 
@@ -88,8 +82,6 @@ class AnimalLocalName(models.Model):
 
     def __str__(self):
         return f"{self.local_name} ({self.language}) for {self.animal.english_name} ({self.animal.scientific_name})"
-
-
 
 # Entry counter to track the number of entries for each model
 class EntryCounter(models.Model):

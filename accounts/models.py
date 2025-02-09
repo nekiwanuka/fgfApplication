@@ -1,6 +1,10 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
+from fgfplatform import settings
+
+
+
 # Custom User Manager
 class FgfUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -66,7 +70,9 @@ class FgfUser(AbstractUser):
     
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(FgfUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name="user_profile", null=True
+    )
     proffession = models.CharField(max_length=100)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)

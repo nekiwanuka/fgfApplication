@@ -3,6 +3,11 @@ from dotenv import load_dotenv
 from datetime import timedelta
 from pathlib import Path
 
+from urllib.parse import urlparse
+
+load_dotenv()
+
+
 # Load environment variables from the .env file
 load_dotenv()
 
@@ -26,7 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'accounts',
-    'plants',
+     'plants',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
@@ -67,7 +72,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'fgfplatform.wsgi.application'
 
 # Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -119,6 +123,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,  # Number of records per page
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',  # Add this line
 }
 
 SIMPLE_JWT = {
@@ -144,7 +151,3 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 SITE_ID = 1
 
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,  # Number of records per page
-}
