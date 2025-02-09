@@ -3,6 +3,12 @@ from .models import (
     Plant, PlantLocalName, Language, MedicinalPlant, PlantImageGallery,
     PlantVideoGallery, scientificClassification
 )
+from django.contrib.auth import get_user_model
+
+class SimpleContributorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ["id", "first_name", "last_name", "email"]
 
 class LanguageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -10,7 +16,7 @@ class LanguageSerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 class PlantSerializer(serializers.ModelSerializer):
-    contributor = serializers.ReadOnlyField(source="contributor.email")
+    contributor = SimpleContributorSerializer(read_only=True)
 
     class Meta:
         model = Plant

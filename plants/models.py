@@ -1,7 +1,9 @@
 from django.conf import settings
+
 from django.db import models
 
 from fgfplatform.constants import STATUS_CHOICES
+
 
 LIFE_FORM_CHOICES = [
     ("forest", "Forest"),
