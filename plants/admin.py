@@ -1,10 +1,10 @@
 from django.contrib import admin
 from .models import (
-    scientificClassification, Plant, Language, PlantLocalName, MedicinalPlant, 
+    ScientificClassification, Plant, Language, PlantLocalName, MedicinalPlant, 
     PlantImageGallery, PlantVideoGallery, PlantEntryCounter
 )
 
-@admin.register(scientificClassification)
+@admin.register(ScientificClassification)
 class scientificClassificationAdmin(admin.ModelAdmin):
     list_display = ("kingdom", "order", "family", "genus", "species")
     search_fields = ("kingdom", "order", "family", "genus", "species")

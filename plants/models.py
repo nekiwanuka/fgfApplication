@@ -30,7 +30,7 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
-class scientificClassification(BaseModel):
+class ScientificClassification(BaseModel):
     kingdom = models.CharField(max_length=100, blank=True, null=True)
     order = models.CharField(max_length=100, blank=True, null=True)
     family = models.CharField(max_length=100, blank=True, null=True)
@@ -44,7 +44,7 @@ class Plant(BaseModel):
     scientific_name = models.CharField(max_length=100, unique=True, blank=True, null=True)
     synonyms = models.TextField(max_length=255, blank=True, null=True)
     english_name = models.CharField(max_length=100, unique=True, blank=True, null=True)
-    scientific_classification = models.ForeignKey(scientificClassification, on_delete=models.SET_NULL, null=True, blank=True
+    scientific_classification = models.ForeignKey(ScientificClassification, on_delete=models.SET_NULL, null=True, blank=True
     )
     distribution_in_uganda = models.CharField(max_length=100, blank=True, null=True)
     unique_habitat = models.CharField(max_length=100, blank=True, null=True)

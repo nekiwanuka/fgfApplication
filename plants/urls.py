@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     PlantViewSet, PlantLocalNameViewSet, LanguageViewSet, MedicinalPlantViewSet,
     PlantImageGalleryViewSet, PlantVideoGalleryViewSet,
-    scientificClassificationViewSet
+    ScientificClassificationViewSet
 )
 
 router = DefaultRouter()
@@ -13,7 +13,7 @@ router.register(r'languages', LanguageViewSet)
 router.register(r'medicinal-plants', MedicinalPlantViewSet)
 router.register(r'plant-images', PlantImageGalleryViewSet)
 router.register(r'plant-videos', PlantVideoGalleryViewSet)
-router.register(r'scientific-clarifications', scientificClassificationViewSet)
+router.register(r'scientific-clarifications', ScientificClassificationViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

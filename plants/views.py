@@ -4,7 +4,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from accounts.permissions import IsContributorOrReadOnly, IsEditorOrSuperUser
 from .models import (
     Plant, PlantLocalName, Language, MedicinalPlant, PlantImageGallery,
-    PlantVideoGallery, scientificClassification
+    PlantVideoGallery, ScientificClassification
 )
 from .serializers import (
     PlantSerializer, PlantLocalNameSerializer, LanguageSerializer,
@@ -84,8 +84,8 @@ class PlantVideoGalleryViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at']
 
 
-class scientificClassificationViewSet(viewsets.ModelViewSet):
-    queryset = scientificClassification.objects.all()
+class ScientificClassificationViewSet(viewsets.ModelViewSet):
+    queryset = ScientificClassification.objects.all()
     serializer_class = scientificClassificationSerializer
     permission_classes = [IsContributorOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]

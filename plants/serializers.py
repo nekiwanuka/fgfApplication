@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     Plant, PlantLocalName, Language, MedicinalPlant, PlantImageGallery,
-    PlantVideoGallery, scientificClassification
+    PlantVideoGallery, ScientificClassification
 )
 from django.contrib.auth import get_user_model
 
@@ -69,5 +69,5 @@ class PlantVideoGallerySerializer(serializers.ModelSerializer):
 
 class scientificClassificationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = scientificClassification
+        model = ScientificClassification
         fields = "__all__"
