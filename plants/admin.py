@@ -16,6 +16,7 @@ class PlantAdmin(admin.ModelAdmin):
     list_filter = ("life_form", "status", "created_at")
     autocomplete_fields = ["scientific_classification", "contributor"]
     ordering = ['english_name'] 
+    readonly_fields = ('created_at', 'updated_at', 'published_date')
 
 @admin.register(Language)
 class LanguageAdmin(admin.ModelAdmin):

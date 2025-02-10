@@ -20,17 +20,9 @@ LIFE_FORM_CHOICES = [
     ("other", "Other"),
 ]
 
-class BaseModel(models.Model):
-    """
-    Abstract base model with common fields.
-    """
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        abstract = True
 
-class ScientificClassification(BaseModel):
+class ScientificClassification(models.Model):
     kingdom = models.CharField(max_length=100, blank=True, null=True)
     order = models.CharField(max_length=100, blank=True, null=True)
     family = models.CharField(max_length=100, blank=True, null=True)
@@ -40,7 +32,7 @@ class ScientificClassification(BaseModel):
     def __str__(self):
         return f"{self.kingdom} {self.order} {self.family} {self.genus} {self.species}"
 
-class Plant(BaseModel):
+class Plant(models.Model):
     scientific_name = models.CharField(max_length=100, unique=True, blank=True, null=True)
     synonyms = models.TextField(max_length=255, blank=True, null=True)
     english_name = models.CharField(max_length=100, unique=True, blank=True, null=True)
@@ -76,7 +68,7 @@ class Language(models.Model):
     def __str__(self):
         return self.name
 
-class PlantLocalName(BaseModel):
+class PlantLocalName(models.Model):
     plant = models.ForeignKey(Plant, on_delete=models.CASCADE, related_name="local_names")
     language = models.ForeignKey(Language, on_delete=models.CASCADE)
     local_name = models.CharField(max_length=255)
@@ -87,7 +79,7 @@ class PlantLocalName(BaseModel):
     def __str__(self):
         return f"{self.local_name} ({self.language})"
 
-class MedicinalPlant(BaseModel):
+class MedicinalPlant(models.Model):
     plant = models.OneToOneField(Plant, on_delete=models.CASCADE, related_name="medicinal_info")
     health_issues = models.TextField()
     part_used = models.CharField(max_length=100, blank=True, null=True)
@@ -108,7 +100,7 @@ class MedicinalPlant(BaseModel):
     def __str__(self):
         return f"Medicinal Info for {self.plant.english_name}"
 
-class PlantImageGallery(BaseModel):
+class PlantImageGallery(models.Model):
     plant = models.ForeignKey(Plant, on_delete=models.CASCADE, related_name="image_gallery")
     image = models.ImageField(upload_to="plant_gallery/", blank=True, null=True)
     caption = models.CharField(max_length=255, blank=True, null=True)
@@ -116,7 +108,7 @@ class PlantImageGallery(BaseModel):
     def __str__(self):
         return f"Image: {self.caption} ({self.plant.english_name})"
 
-class PlantVideoGallery(BaseModel):
+class PlantVideoGallery(models.Model):
     plant = models.ForeignKey(Plant, on_delete=models.CASCADE, related_name="video_gallery")
     video = models.FileField(upload_to="plant_videos/", blank=True, null=True)
     caption = models.CharField(max_length=255, blank=True, null=True)
@@ -127,7 +119,7 @@ class PlantVideoGallery(BaseModel):
 
 
 
-class PlantEntryCounter(BaseModel):
+class PlantEntryCounter(models.Model):
     model_name = models.CharField(max_length=100, unique=True)
     total_entries = models.PositiveIntegerField(default=0)
 

@@ -10,33 +10,46 @@ class AnimalClassificationSerializer(serializers.ModelSerializer):
 class AnimalProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnimalProfile
-        fields = '__all__'  # Include all fields by default
+        fields = '__all__'
+        read_only_fields = ['review_feedback', 'citation', 'created_at', 'updated_at']
+        extra_kwargs = {'contributors': {'read_only': True}}  # Ensure contributors can't be modified directly
+
+    def is_contributor(self):
+        """Check if the user is authenticated and NOT staff."""
+        request = self.context.get('request', None)
+        user = getattr(request, 'user', None)
+        return user and user.is_authenticated and not user.is_staff
 
     def to_representation(self, instance):
-        # Get the original serialized data
+        """Customize response to exclude 'status' field for contributors."""
         representation = super().to_representation(instance)
-        
-        # Get the request context (used to check user role)
-        request = self.context.get('request')
-
-        # If user is a contributor, hide the status field in the response
-        if request and request.user and not request.user.is_staff:  # Contributor check
-            representation.pop('status', None)  # Exclude the status field
-        
+        if self.is_contributor():
+            representation.pop('status', None)  # Hide 'status' for contributors
         return representation
 
     def update(self, instance, validated_data):
-        # If user is a contributor, remove the status field from the validated data
-        request = self.context.get('request')
-        if request and request.user and not request.user.is_staff:
-            validated_data.pop('status', None)
-        
+        """Prevent contributors from modifying the 'status' field."""
+        if self.is_contributor():
+            validated_data.pop('status', None)  # Remove status from update data
         return super().update(instance, validated_data)
 
     def create(self, validated_data):
-        # Ensure 'status' is set to a default value (e.g., 'draft') for new entries
-        validated_data['status'] = 'draft'  # Automatically set 'status' to 'draft'
-        return super().create(validated_data)
+        """Ensure 'status' defaults to 'draft' and add the contributor."""
+        request = self.context.get('request')  # Get request context
+        validated_data.setdefault('status', 'draft')  # Default status to draft
+            
+        animal_profile = super().create(validated_data)  # Create the object
+            
+        if request and request.user.is_authenticated:
+            animal_profile.contributor.add(request.user)  # Add the logged-in user as a contributor
+
+        contributors = validated_data.pop('contributor', [])
+        if contributors:
+            animal_profile.contributor.set(contributors)
+
+        return animal_profile
+
+
 
 
 

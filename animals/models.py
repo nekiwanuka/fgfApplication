@@ -14,7 +14,12 @@ class AnimalClassification(models.Model):
     order = models.CharField(max_length=250)
     domestic = models.BooleanField(default=False)
     wild_animal = models.BooleanField(default=False)
-    contributors = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='contributed_animal_classifications',blank=True)
+    contributors = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, 
+        related_name='contributed_animal_profiles', 
+        blank=True
+    )
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     review_feedback = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -53,7 +58,7 @@ class AnimalProfile(models.Model):
     video = models.FileField(upload_to="animal_videos", null=True, blank=True)
     audio = models.FileField(upload_to="animal_audios", null=True, blank=True)
     citation = models.TextField(blank=True, null=True) 
-    contributors = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='contributed_animals',blank=True)
+    contributor = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='contributed_animals',blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     review_feedback = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
