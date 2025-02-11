@@ -129,7 +129,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Increased time for access token
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=12
+    ),  # Increased time for access token
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Extended refresh token lifetime
 }
 
@@ -151,3 +152,4 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 SITE_ID = 1
 
+# notes, change access token later
