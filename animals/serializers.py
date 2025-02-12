@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from accounts.models import FgfUser
-from .models import AnimalProfile, AnimalClassification, AnimalLocalName, EntryCounter
+from .models import AnimalProfile, AnimalClassification, AnimalLocalName, AnimalEntryCounter, AnimalImageGallery, AnimalVideoGallery
 
 # ✅ Contributor Serializer (Handles a Single Contributor)
 class ContributorSerializer(serializers.ModelSerializer):
@@ -21,11 +21,14 @@ class AnimalClassificationNestedSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnimalClassification
         fields = [
-            "kingdom_name",
-            "species",
-            "number_of_species",
+            "kingdom",
+            "phylum",
             "animal_class",
             "order",
+            "family",
+            "genus",
+            "species",
+            "number_of_species",
         ]  # Only keep essential fields for nested use
 
 
@@ -59,11 +62,21 @@ class AnimalLocalNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnimalLocalName
         fields = '__all__'
+        
+class AnimalImageGallerySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnimalImageGallery
+        fields = '__all__'
+        
+class AnimalVideoGallerySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnimalVideoGallery
+        fields = '__all__'
 
 
 # ✅ Entry Counter Serializer
 class EntryCounterSerializer(serializers.ModelSerializer):
     class Meta:
-        model = EntryCounter
+        model = AnimalEntryCounter
         fields = '__all__'
         read_only_fields = ['model_name', 'total_entries']

@@ -22,8 +22,10 @@ LIFE_FORM_CHOICES = [
 
 
 
-class ScientificClassification(models.Model):
+class PlantScientificClassification(models.Model):
     kingdom = models.CharField(max_length=100, blank=True, null=True)
+    phylum = models.CharField(max_length=100, blank=True, null=True)
+    animal_class = models.CharField(max_length=100, blank=True, null=True)
     order = models.CharField(max_length=100, blank=True, null=True)
     family = models.CharField(max_length=100, blank=True, null=True)
     genus = models.CharField(max_length=100, blank=True, null=True)
@@ -36,7 +38,7 @@ class Plant(models.Model):
     scientific_name = models.CharField(max_length=100, unique=True, blank=True, null=True)
     synonyms = models.TextField(max_length=255, blank=True, null=True)
     english_name = models.CharField(max_length=100, unique=True, blank=True, null=True)
-    scientific_classification = models.ForeignKey(ScientificClassification, on_delete=models.SET_NULL, null=True, blank=True
+    plant_scientific_classification = models.ForeignKey(PlantScientificClassification, on_delete=models.SET_NULL, null=True, blank=True
     )
     distribution_in_uganda = models.CharField(max_length=100, blank=True, null=True)
     unique_habitat = models.CharField(max_length=100, blank=True, null=True)
@@ -115,8 +117,6 @@ class PlantVideoGallery(models.Model):
 
     def __str__(self):
         return f"Video: {self.caption} ({self.plant.english_name})"
-
-
 
 
 class PlantEntryCounter(models.Model):

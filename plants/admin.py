@@ -1,10 +1,10 @@
 from django.contrib import admin
 from .models import (
-    ScientificClassification, Plant, Language, PlantLocalName, MedicinalPlant, 
+    PlantScientificClassification, Plant, Language, PlantLocalName, MedicinalPlant, 
     PlantImageGallery, PlantVideoGallery, PlantEntryCounter
 )
 
-@admin.register(ScientificClassification)
+@admin.register(PlantScientificClassification)
 class scientificClassificationAdmin(admin.ModelAdmin):
     list_display = ("kingdom", "order", "family", "genus", "species")
     search_fields = ("kingdom", "order", "family", "genus", "species")
@@ -14,7 +14,7 @@ class PlantAdmin(admin.ModelAdmin):
     list_display = ("english_name", "scientific_name", "life_form", "status", "contributor")
     search_fields = ("english_name", "scientific_name", "distribution_in_uganda")
     list_filter = ("life_form", "status", "created_at")
-    autocomplete_fields = ["scientific_classification", "contributor"]
+    autocomplete_fields = ["plant_scientific_classification", "contributor"]
     ordering = ['english_name'] 
     readonly_fields = ('created_at', 'updated_at', 'published_date')
 

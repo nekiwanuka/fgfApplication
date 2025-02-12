@@ -1,11 +1,11 @@
 from django.contrib import admin
-from .models import AnimalClassification, AnimalProfile, AnimalLocalName, EntryCounter
+from .models import AnimalClassification, AnimalProfile, AnimalLocalName, AnimalEntryCounter
 
 @admin.register(AnimalClassification)
 class AnimalClassificationAdmin(admin.ModelAdmin):
-    list_display = ('animal_classification_id', 'animal_class', 'kingdom_name', 'species', 'number_of_species', 'status', 'created_at')
-    search_fields = ('animal_class', 'kingdom_name', 'species')
-    list_filter = ('status', 'kingdom_name')
+    list_display = ('animal_classification_id', 'animal_class', 'kingdom', 'species', 'number_of_species', 'status', 'created_at')
+    search_fields = ('animal_class', 'kingdom', 'species')
+    list_filter = ('status', 'kingdom')
     readonly_fields = ('created_at', 'updated_at', 'published_date')
 
 
@@ -18,7 +18,7 @@ class AnimalProfileAdmin(admin.ModelAdmin):
 
     def animal_classification_details(self, obj):
         """Displays the linked classification details."""
-        return f"{obj.animal_classification.animal_class} - {obj.animal_classification.kingdom_name} - {obj.animal_classification.species}"
+        return f"{obj.animal_classification.animal_class} - {obj.animal_classification.kingdom} - {obj.animal_classification.species}"
     
     animal_classification_details.short_description = 'Animal Classification'
 
@@ -30,7 +30,7 @@ class AnimalLocalNameAdmin(admin.ModelAdmin):
     list_filter = ('language',)
     
 
-@admin.register(EntryCounter)
+@admin.register(AnimalEntryCounter)
 class EntryCounterAdmin(admin.ModelAdmin):
     list_display = ('model_name', 'total_entries')
     readonly_fields = ('model_name', 'total_entries')

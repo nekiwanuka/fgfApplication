@@ -1,11 +1,11 @@
 from rest_framework import viewsets, filters
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from .models import AnimalProfile, AnimalClassification, AnimalLocalName, EntryCounter
+from .models import AnimalImageGallery, AnimalProfile, AnimalClassification, AnimalLocalName, AnimalEntryCounter, AnimalVideoGallery
 from .serializers import (
     AnimalProfileSerializer, 
     AnimalClassificationSerializer, 
     AnimalClassificationNestedSerializer,  # Added for nested use
-    AnimalLocalNameSerializer, 
+    AnimalLocalNameSerializer, AnimalImageGallerySerializer, AnimalVideoGallerySerializer,
     EntryCounterSerializer
 )
 from accounts.permissions import IsContributorOrReadOnly, IsEditorOrSuperUser
@@ -50,8 +50,8 @@ class AnimalClassificationViewSet(viewsets.ModelViewSet):
     queryset = AnimalClassification.objects.all()
     permission_classes = [IsContributorOrReadOnly]
     filter_backends = [filters.OrderingFilter, filters.SearchFilter]
-    search_fields = ['kingdom_name', 'species', 'animal_class', 'order']
-    ordering_fields = ['kingdom_name', 'species', 'animal_class']
+    search_fields = ['kingdom', 'species', 'animal_class', 'order']
+    ordering_fields = ['kingdom', 'species', 'animal_class']
 
     def get_serializer_class(self):
         """Return the appropriate serializer depending on the request context."""
@@ -70,9 +70,24 @@ class AnimalLocalNameViewSet(viewsets.ModelViewSet):
     ordering_fields = ['local_name', 'language']
 
 
+
+class AnimalImageGalleryViewSet(viewsets.ModelViewSet):
+    queryset = AnimalImageGallery.objects.all()
+    serializer_class = AnimalImageGallerySerializer
+    permission_classes = [IsEditorOrSuperUser]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['image', 'caption', 'date_entered']
+    
+class AnimalVideoGalleryViewSet(viewsets.ModelViewSet):
+    queryset = AnimalVideoGallery.objects.all()
+    serializer_class = AnimalVideoGallerySerializer
+    permission_classes = [IsEditorOrSuperUser]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['video', 'caption', 'date_entered']
+
 # ✅ Entry Counter ViewSet
 class EntryCounterViewSet(viewsets.ModelViewSet):
-    queryset = EntryCounter.objects.all()
+    queryset = AnimalEntryCounter.objects.all()
     serializer_class = EntryCounterSerializer
     permission_classes = [IsEditorOrSuperUser]
     filter_backends = [filters.OrderingFilter]

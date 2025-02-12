@@ -1,7 +1,5 @@
 from django.db import models
 from accounts.models import FgfUser
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
 from fgfplatform import settings
 from fgfplatform.constants import STATUS_CHOICES
 
@@ -11,11 +9,15 @@ def animal_media_upload_path(instance, filename):
 
 class AnimalClassification(models.Model):
     animal_classification_id = models.AutoField(primary_key=True)
-    kingdom_name = models.CharField(max_length=250, db_index=True)
-    species = models.CharField(max_length=250, db_index=True)
-    number_of_species = models.IntegerField(default=1, null=True)
+    kingdom = models.CharField(max_length=250, db_index=True)
+    phylum = models.CharField(max_length=250, db_index=True)
     animal_class = models.CharField(max_length=250, db_index=True)
     order = models.CharField(max_length=250, db_index=True)
+    family = models.CharField(max_length=250, db_index=True)
+    genus = models.CharField(max_length=250, db_index=True)
+    species = models.CharField(max_length=250, db_index=True)
+    number_of_species = models.IntegerField(default=1, null=True)
+    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     review_feedback = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -26,7 +28,7 @@ class AnimalClassification(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.animal_class} ({self.kingdom_name})"
+        return f"{self.animal_class} ({self.kingdom})"
 
 class AnimalProfile(models.Model):
     english_name = models.CharField(max_length=250, db_index=True)
@@ -104,9 +106,30 @@ class AnimalLocalName(models.Model):
 
     def __str__(self):
         return f"{self.local_name} ({self.language}) for {self.animal.english_name} ({self.animal.scientific_name})"
+    
+    
+class AnimalImageGallery(models.Model):
+    animal_english_name = models.CharField(max_length=250, db_index=True)
+    image = models.ImageField(upload_to="animal_gallery/", blank=True, null=True)
+    caption = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return f"Image: {self.caption} ({self.animal_english_name})"
+
+class AnimalVideoGallery(models.Model):
+    animal_english_name = models.CharField(max_length=250, db_index=True)
+    video = models.FileField(upload_to="animal_videos/", blank=True, null=True)
+    caption = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return f"Video: {self.caption} ({self. animal_english_name})"
+    
+    
+    
+    
 
 # Entry counter to track the number of entries for each model
-class EntryCounter(models.Model):
+class AnimalEntryCounter(models.Model):
     model_name = models.CharField(max_length=100, unique=True)
     total_entries = models.PositiveIntegerField(default=0)
 
@@ -125,18 +148,4 @@ class EntryCounter(models.Model):
     def __str__(self):
         return f"{self.model_name} Total Entries: {self.total_entries}"
 
-# Signal Handlers to Automatically Update Counters
-@receiver(post_save, sender=AnimalProfile)
-@receiver(post_save, sender=AnimalClassification)
-@receiver(post_save, sender=AnimalLocalName)
-def increment_entry_counter(sender, instance, created, **kwargs):
-    if created:
-        counter, _ = EntryCounter.objects.get_or_create(model_name=sender.__name__)
-        counter.increment()
 
-@receiver(post_delete, sender=AnimalProfile)
-@receiver(post_delete, sender=AnimalClassification)
-@receiver(post_delete, sender=AnimalLocalName)
-def decrement_entry_counter(sender, instance, **kwargs):
-    counter, _ = EntryCounter.objects.get_or_create(model_name=sender.__name__)
-    counter.decrement()

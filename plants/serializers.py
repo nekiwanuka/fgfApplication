@@ -1,7 +1,8 @@
 from rest_framework import serializers
+from accounts.models import FgfUser
 from .models import (
     Plant, PlantLocalName, Language, MedicinalPlant, PlantImageGallery,
-    PlantVideoGallery, ScientificClassification
+    PlantVideoGallery, PlantScientificClassification
 )
 from django.contrib.auth import get_user_model
 
@@ -17,10 +18,12 @@ class LanguageSerializer(serializers.ModelSerializer):
 
 class PlantSerializer(serializers.ModelSerializer):
     contributor = SimpleContributorSerializer(read_only=True)
-
+    contributor_id = serializers.PrimaryKeyRelatedField(
+    source='contributor', queryset=FgfUser.objects.all(), write_only=True)
     class Meta:
         model = Plant
         fields = "__all__"
+        read_only_fields = ['citation', 'created_at', 'updated_at','review_feedback', 'status', 'published_date']
 
 class PlantLocalNameSerializer(serializers.ModelSerializer):
     plant = serializers.PrimaryKeyRelatedField(queryset=Plant.objects.all())
@@ -67,7 +70,20 @@ class PlantVideoGallerySerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class scientificClassificationSerializer(serializers.ModelSerializer):
+class PlantScientificClassificationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ScientificClassification
+        model = PlantScientificClassification
         fields = "__all__"
+
+class PlantScientificClassificationNestedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlantScientificClassification
+        fields = [
+            "kingdom",
+            "phylum",
+            "animal_class",
+            "order",
+            "family",
+            "genus",
+            "species",
+        ]
