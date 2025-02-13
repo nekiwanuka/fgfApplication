@@ -26,6 +26,7 @@ urlpatterns = [
     
     # Ensure the paths are properly formatted and no extra spaces exist
     path('plants/', include('plants.urls')),  # No extra space after api/v1/
+    path('cultures/', include('cultures.urls')),  # No extra space after api/v1/
 
     # Swagger UI
     path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
