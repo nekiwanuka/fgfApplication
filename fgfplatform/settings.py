@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_yasg',
     'django_filters',
+    'import_export',
 
     # Custom apps (your own apps)
     'accounts',
