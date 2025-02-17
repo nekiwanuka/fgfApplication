@@ -5,6 +5,10 @@ from pathlib import Path
 
 from urllib.parse import urlparse
 
+
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+
 load_dotenv()
 
 
@@ -24,22 +28,33 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 # Application definition
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
+    # Django built-in apps (should always be at the top)
+    'unfold',
+    "unfold.contrib.forms",
     'django.contrib.contenttypes',
+    'django.contrib.auth',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts',
-    'plants',
-    'cultures',
+    'django.contrib.admin',  # Ensure this is only listed once
+
+    # Third-party apps
+    'grappelli',
+    'colorfield',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'drf_yasg',
-    'animals',
     'django_filters',
+
+    # Custom apps (your own apps)
+    'accounts',
+    'plants',
+    'cultures',
+    'animals',
 ]
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -50,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
 ]
 
 ROOT_URLCONF = 'fgfplatform.urls'
@@ -108,8 +124,21 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'  
+
+# Central directory for static files (for development)
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "animals", "static"),  # Animals app static files
+    os.path.join(BASE_DIR, "cultures", "static"),  # Cultures app static files
+    os.path.join(BASE_DIR, "plants", "static"),  # Plants app static files
+]
+
+# Directory where static files are collected (for deployment)
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  
+
+# Media files (Uploaded files)
+MEDIA_URL = '/media/'  
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -130,7 +159,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=12
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=72
     ),  # Increased time for access token
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Extended refresh token lifetime
 }
@@ -148,9 +177,40 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER')
 
-# Static files collection
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
 SITE_ID = 1
 
+X_FRAME_OPTIONS = 'SAMEORIGIN'  # Add this line
+SILENCED_SYSTEM_CHECKS = ['security.W019']  # Add this line
+
 # notes, change access token later
+
+GRAPPELLI_ADMIN_TITLE = "FGF BIODIVERSITY PLATFORM"
+GRAPPELLI_SWITCH_USER = True
+GRAPPELLI_AUTOCOMPLETE_LIMIT = 10
+
+UNFOLD = {
+    "SITE_TITLE": " FGF BIODIVERSITY PLATFORM",
+    "SITE_HEADER": "FGF Biodiversity Platform",
+    "SITE_SUBHEADER": "ADMIN DASHBOARD ",
+    "SITE_DROPDOWN": [],
+    "SHOW_HISTORY": True, # show/hide "History" button, default: True
+    "SHOW_BACK_BUTTON": False,
+    "SHOW_LANGUAGES": True,
+}
+
+LANGUAGE_CODE = "en"
+
+USE_I18N = True
+
+LANGUAGES = [
+    ('en', _('English')),
+    ('sw', _('Swahili')),
+
+]
+
+
+LANGUAGES = (
+    ("de", _("German")),
+    ("en", _("English")),
+
+)

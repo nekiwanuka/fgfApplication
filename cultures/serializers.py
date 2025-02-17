@@ -91,7 +91,12 @@ class ClanSerializer(serializers.ModelSerializer):
 
 
 class ClanProfileSerializer(serializers.ModelSerializer):
-    """Returns all fields for ClanProfile, while nesting EthnicGroup"""
+    ethnic_group = EthnicGroupNestedSerializer(read_only=True)
+    cultural_kingdom = CulturalKingdomNestedSerializer(read_only=True)
+    clan = ClanSerializer(read_only=True)  # Use the correct serializer to return full clan details
+    editor = serializers.CharField(source="editor.username", read_only=True)  # Ensure editor's username is shown
+
     class Meta:
         model = ClanProfile
-        fields = '__all__'
+        fields = '__all__'  # Ensure all fields are included
+

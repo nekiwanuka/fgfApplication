@@ -10,16 +10,16 @@ from django.urls import reverse
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import FgfUser, UserProfile
-from .serializers import UserSerializer, ContributorRegistrationSerializer, UserProfileSerializer
+from .serializers import UserSerializer, ContributorRegistrationSerializer, UserProfileSerializer, FgfUserSerializer
 from rest_framework.decorators import action
 from django.contrib.sites.shortcuts import get_current_site
 from django.views import View
 from django.http import HttpResponse
+from django.utils.encoding import force_bytes
 from rest_framework.permissions import IsAdminUser
-from rest_framework.generics import RetrieveUpdateAPIView
-from rest_framework import generics
-from .serializers import FgfUserSerializer, UserProfileSerializer
+from rest_framework.generics import RetrieveUpdateAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 
+User = get_user_model()
 
 # Utility to send verification email
 def send_verification_email(request, user):
@@ -206,18 +206,62 @@ class UserProfileView(RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user.profile
 
-class FgfUserListCreateView(generics.ListCreateAPIView):
+class FgfUserListCreateView(ListCreateAPIView):
     queryset = FgfUser.objects.all()
     serializer_class = FgfUserSerializer
 
-class FgfUserDetailView(generics.RetrieveUpdateDestroyAPIView):
+class FgfUserDetailView(RetrieveUpdateDestroyAPIView):
     queryset = FgfUser.objects.all()
     serializer_class = FgfUserSerializer
 
-class ProfileListCreateView(generics.ListCreateAPIView):
+class ProfileListCreateView(ListCreateAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
 
-class ProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
+class ProfileDetailView(RetrieveUpdateDestroyAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
+
+#Password Reset
+class PasswordResetConfirmView(APIView):
+    def post(self, request):
+        uidb64 = request.data.get("uid")
+        token = request.data.get("token")
+        new_password = request.data.get("new_password")
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is not None and default_token_generator.check_token(user, token):
+            user.set_password(new_password)
+            user.save()
+            return Response({"detail": "Password reset successful."}, status=status.HTTP_200_OK)
+
+        return Response({"error": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+
+class PasswordResetRequestView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Generate reset token
+        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        reset_url = f"http://127.0.0.1:8000/auth/password-reset-confirm/?uid={uidb64}&token={token}"
+        
+        # Send email
+        send_mail(
+            subject="Password Reset",
+            message=f"Click the link to reset your password: {reset_url}",
+            from_email="no-reply@example.com",
+            recipient_list=[user.email],
+        )
+
+        return Response({"detail": "Password reset e-mail has been sent."}, status=status.HTTP_200_OK)

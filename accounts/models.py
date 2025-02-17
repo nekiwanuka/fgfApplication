@@ -1,9 +1,6 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
-
 from fgfplatform import settings
-
-
 
 # Custom User Manager
 class FgfUserManager(BaseUserManager):
@@ -11,6 +8,11 @@ class FgfUserManager(BaseUserManager):
         if not email:
             raise ValueError('Email is required')
         email = self.normalize_email(email)
+
+        # All new users are contributors but inactive until they verify email
+        extra_fields.setdefault('is_contributor', True)
+        extra_fields.setdefault('is_active', False)  # Must verify email to activate
+
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -19,19 +21,13 @@ class FgfUserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('is_active', True)  # Ensure superuser is active by default
+        extra_fields.setdefault('is_active', True)  # Superusers are active by default
         return self.create_user(email, password, **extra_fields)
 
     def create_editor(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_editor', True)
         extra_fields.setdefault('is_active', True)  # Editors are active by default
         return self.create_user(email, password, **extra_fields)
-
-    def create_contributor(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_contributor', True)
-        extra_fields.setdefault('is_active', True)  # Contributors are active by default
-        return self.create_user(email, password, **extra_fields)
-
 
 # Custom User Model
 class FgfUser(AbstractUser):
@@ -51,10 +47,10 @@ class FgfUser(AbstractUser):
     
     # User Role Flags
     is_editor = models.BooleanField(default=False)
-    is_contributor = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=False)
+    is_contributor = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)  # Users must verify email
     is_verified = models.BooleanField(default=False)
-    
+    is_superuser = models.BooleanField(default=False)
 
     objects = FgfUserManager()
 
@@ -67,7 +63,20 @@ class FgfUser(AbstractUser):
 
     def __str__(self):
         return f"{self.email} ({self.first_name} {self.last_name})"
-    
+
+    def promote_to_editor(self):
+        """Promote a contributor to an editor."""
+        self.is_editor = True
+        self.is_contributor = False
+        self.save()
+
+    def promote_to_superuser(self):
+        """Promote an editor to a superuser."""
+        self.is_superuser = True
+        self.is_editor = False
+        self.is_staff = True
+        self.save()
+
 
 class UserProfile(models.Model):
     user = models.ForeignKey(
@@ -77,5 +86,6 @@ class UserProfile(models.Model):
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     date_of_birth = models.DateField(null=True, blank=True)
+
     def __str__(self):
         return f'{self.user.email} - UserProfile'

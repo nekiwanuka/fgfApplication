@@ -3,9 +3,10 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     UserViewSet, LoginView, LogoutView, PasswordChangeView, VerifyEmailView,
-    ContributorRegistrationView, PasswordResetVerifyView, VerifyEmailRedirectView, UserProfileView,
+    ContributorRegistrationView, VerifyEmailRedirectView, UserProfileView,
     FgfUserListCreateView, FgfUserDetailView, ProfileListCreateView, ProfileDetailView
 )
+from .views import PasswordResetRequestView, PasswordResetConfirmView
 
 # Router setup for UserViewSet
 router = DefaultRouter()
@@ -28,10 +29,6 @@ email_verification_patterns = [
     path('auth/verify-email-redirect/', VerifyEmailRedirectView.as_view(), name='verify_email_redirect'),
 ]
 
-# Password Reset URLs
-password_reset_patterns = [
-    path('auth/password-reset-verify/<str:uidb64>/<str:token>/', PasswordResetVerifyView.as_view(), name='password_reset_verify'),
-]
 
 # FgfUser and Profile URLs
 fgf_user_profile_patterns = [
@@ -39,8 +36,14 @@ fgf_user_profile_patterns = [
     path('users/<int:pk>/', FgfUserDetailView.as_view(), name='user-detail'),
     path('userprofiles/', ProfileListCreateView.as_view(), name='user-profile-list-create'),
     path('userprofiles/<int:pk>/', ProfileDetailView.as_view(), name='user-profile-detail'),
+
 ]
 
+#Password reset urls
+password_reset_patterns = [
+    path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
+    path('auth/password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+]
 # Combine all URL patterns
 urlpatterns = [
     path('', include(router.urls)),  # UserViewSet endpoints
