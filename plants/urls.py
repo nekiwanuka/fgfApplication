@@ -7,7 +7,7 @@ PlantScientificClassificationViewSet
 )
 
 router = DefaultRouter()
-router.register(r'plant-profile', PlantViewSet)
+router.register(r'plant', PlantViewSet)
 router.register(r'plant-local-names', PlantLocalNameViewSet)
 router.register(r'languages', LanguageViewSet)
 router.register(r'medicinal-plants', MedicinalPlantViewSet)
