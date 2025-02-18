@@ -5,7 +5,6 @@ from fgfplatform import settings
 # Custom User Manager
 class FgfUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
-        # Ensure email is provided
         if not email:
             raise ValueError('Email is required')
         email = self.normalize_email(email)
@@ -20,14 +19,12 @@ class FgfUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        # Set default fields for superuser
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)  # Superusers are active by default
         return self.create_user(email, password, **extra_fields)
 
     def create_editor(self, email, password=None, **extra_fields):
-        # Set default fields for editor
         extra_fields.setdefault('is_editor', True)
         extra_fields.setdefault('is_active', True)  # Editors are active by default
         return self.create_user(email, password, **extra_fields)
@@ -41,7 +38,7 @@ class FgfUser(AbstractUser):
     date_of_birth = models.DateField(null=True, blank=True)
     deleted = models.BooleanField(default=False)
 
-    # Gender choices for the user
+    
     GENDER_CHOICES = [
         ('male', 'Male'),
         ('female', 'Female'),
@@ -53,6 +50,9 @@ class FgfUser(AbstractUser):
     # User Role Flags
     is_editor = models.BooleanField(default=False)
     is_contributor = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)  # Users must verify email
+    is_verified = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
 
     objects = FgfUserManager()
 
