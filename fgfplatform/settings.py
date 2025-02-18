@@ -2,6 +2,19 @@ import os
 from dotenv import load_dotenv
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urlparse
+from django.urls import reverse_lazy
+import environ
+
+env = environ.Env()
+environ.Env.read_env()
+
+
+from django.templatetags.static import static
+
+from django.utils.translation import gettext_lazy as _
+
+
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -15,21 +28,43 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
-
+#ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = ['*']
 # Application definition
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
+    # Django built-in apps (should always be at the top)
+    "unfold",  # before django.contrib.admin
+    "unfold.contrib.filters",  # optional, if special filters are needed
+    "unfold.contrib.forms",  # optional, if special form elements are needed
+    "unfold.contrib.inlines",  # optional, if special inlines are needed
+    "unfold.contrib.import_export",  # optional, if django-import-export package is used
+    "unfold.contrib.guardian",  # optional, if django-guardian package is used
+    "unfold.contrib.simple_history",  # optional, if django-simple-history package is used
     'django.contrib.contenttypes',
+    'django.contrib.auth',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts',
+    'django.contrib.admin',  # Ensure this is only listed once
+
+    # Third-party apps
+    # 'grappelli',
+    # 'colorfield',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+    'drf_yasg',
+    'django_filters',
+
+
+    # Custom apps (your own apps)
+    'accounts',
+    'plants',
+    'cultures',
+    'animals',
 ]
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -62,14 +97,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'fgfplatform.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / os.getenv('DATABASE_NAME', 'db.sqlite3'),
-    }
+    'default': env.db('DATABASE_URL', default='postgres://fgfplatform:password@localhost:5432/mydb')
 }
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -88,24 +121,27 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'Africa/Kampala'
-
-USE_I18N = True
-
-USE_TZ = True
-
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'  
+
+# Central directory for static files (for development)
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "animals", "static"),  # Animals app static files
+    os.path.join(BASE_DIR, "cultures", "static"),  # Cultures app static files
+    os.path.join(BASE_DIR, "plants", "static"),  # Plants app static files
+]
+
+# Directory where static files are collected (for deployment)
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  
+
+# Media files (Uploaded files)
+MEDIA_URL = '/media/'  
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-AUTH_USER_MODEL = 'accounts.CustomUser'
+AUTH_USER_MODEL = 'accounts.FgfUser'
 
 # REST framework settings
 REST_FRAMEWORK = {
@@ -115,10 +151,14 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,  # Number of records per page
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',  # Add this line
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Increased time for access token
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=72
+    ),  # Increased time for access token
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Extended refresh token lifetime
 }
 
@@ -135,5 +175,32 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER')
 
-# Static files collection
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+SITE_ID = 1
+
+X_FRAME_OPTIONS = 'SAMEORIGIN'  # Add this line
+SILENCED_SYSTEM_CHECKS = ['security.W019']  # Add this line
+
+# notes, change access token later
+
+# GRAPPELLI_ADMIN_TITLE = "FGF BIODIVERSITY PLATFORM"
+# GRAPPELLI_SWITCH_USER = True
+# GRAPPELLI_AUTOCOMPLETE_LIMIT = 10
+
+UNFOLD = {
+    "SITE_TITLE": " FGF BIODIVERSITY PLATFORM",
+    "SITE_HEADER": "FGF Biodiversity Platform",
+    "SITE_SUBHEADER": "ADMIN DASHBOARD ",
+    "SITE_DROPDOWN": [],
+    "SHOW_HISTORY": True, # show/hide "History" button, default: True
+    "SHOW_BACK_BUTTON": False,
+}
+
+# Internationalization
+# https://docs.djangoproject.com/en/5.1/topics/i18n/
+LANGUAGE_CODE = 'en-us'
+
+TIME_ZONE = 'Africa/Kampala'
+
+USE_I18N = True
+
+USE_TZ = True

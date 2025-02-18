@@ -1,23 +1,54 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import UserViewSet, LoginView, LogoutView, PasswordChangeView, VerifyEmailView, ContributorRegistrationView, PasswordResetVerifyView, VerifyEmailRedirectView
+from .views import (
+    UserViewSet, LoginView, LogoutView, PasswordChangeView, VerifyEmailView,
+    ContributorRegistrationView, VerifyEmailRedirectView, UserProfileView,
+    FgfUserListCreateView, FgfUserDetailView, ProfileListCreateView, ProfileDetailView
+)
+from .views import PasswordResetRequestView, PasswordResetConfirmView
 
+# Router setup for UserViewSet
 router = DefaultRouter()
 router.register('users', UserViewSet, basename='user')
 
-urlpatterns = [
-    path('login/', LoginView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(), name='logout'),
-    path('signup/', ContributorRegistrationView.as_view(), name='signup'),
-    path('auth/login/', LoginView.as_view(), name='token_obtain_pair'),
+# Authentication and User Management URLs
+auth_patterns = [
+    path('auth/login/', LoginView.as_view(), name='login'),
+    path('login/', LoginView.as_view(), name='login_page'),  # Added this line
+    path('auth/logout/', LogoutView.as_view(), name='logout'),
+    path('auth/signup/', ContributorRegistrationView.as_view(), name='signup'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('auth/logout/', LogoutView.as_view(), name='auth_logout'),
-    path('auth/password/change/', PasswordChangeView.as_view(), name='auth_password_change'),
-    path('verify-email/<int:pk>/<str:token>/', VerifyEmailView.as_view(), name='verify-email'),
-    path('verify-email-redirect/', VerifyEmailRedirectView.as_view(), name='verify-email-redirect'),
-    path('password-reset-verify/<str:uidb64>/<str:token>/', PasswordResetVerifyView.as_view(), name='password_reset_verify'),
+    path('auth/password/change/', PasswordChangeView.as_view(), name='password_change'),
+    path('auth/profile/', UserProfileView.as_view(), name='profile'),
+]
 
-    path('verify-email/<int:pk>/<str:token>/', VerifyEmailView.as_view(), name='verify_email'),
-    path('', include(router.urls)),
+# Email Verification URLs
+email_verification_patterns = [
+    path('auth/verify-email/<int:user_id>/<str:token>/', VerifyEmailView.as_view(), name='verify_email'),  # Updated this line
+    path('auth/verify-email-redirect/', VerifyEmailRedirectView.as_view(), name='verify_email_redirect'),
+]
+
+
+# FgfUser and Profile URLs
+fgf_user_profile_patterns = [
+    path('users/', FgfUserListCreateView.as_view(), name='user-list-create'),
+    path('users/<int:pk>/', FgfUserDetailView.as_view(), name='user-detail'),
+    path('userprofiles/', ProfileListCreateView.as_view(), name='user-profile-list-create'),
+    path('userprofiles/<int:pk>/', ProfileDetailView.as_view(), name='user-profile-detail'),
+
+]
+
+#Password reset urls
+password_reset_patterns = [
+    path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
+    path('auth/password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+]
+# Combine all URL patterns
+urlpatterns = [
+    path('', include(router.urls)),  # UserViewSet endpoints
+    *auth_patterns,
+    *email_verification_patterns,
+    *password_reset_patterns,
+    *fgf_user_profile_patterns,
 ]

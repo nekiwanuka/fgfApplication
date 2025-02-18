@@ -1,4 +1,4 @@
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions, viewsets
@@ -9,17 +9,22 @@ from django.core.mail import send_mail
 from django.urls import reverse
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .models import CustomUser
-from .serializers import UserSerializer, ContributorRegistrationSerializer
+from .models import FgfUser, UserProfile
+from .serializers import UserSerializer, ContributorRegistrationSerializer, UserProfileSerializer, FgfUserSerializer
 from rest_framework.decorators import action
 from django.contrib.sites.shortcuts import get_current_site
 from django.views import View
+from django.http import HttpResponse
+from django.utils.encoding import force_bytes
+from rest_framework.permissions import IsAdminUser
+from rest_framework.generics import RetrieveUpdateAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 
+User = get_user_model()
 
 # Utility to send verification email
 def send_verification_email(request, user):
     token = default_token_generator.make_token(user)  # Use Django's default token generator
-    relative_link = reverse('verify-email', args=[user.pk, token])
+    relative_link = reverse('verify_email', args=[user.pk, token])
     domain = get_current_site(request).domain
     full_link = f"http://{domain}{relative_link}"
 
@@ -41,12 +46,16 @@ class UserViewSet(viewsets.ViewSet):
 
     def list(self, request):
         if request.user.is_superuser:
-            users = CustomUser.objects.filter(is_active=True)
-            serializer = UserSerializer(users, many=True)
-            return Response(serializer.data)
-        return Response({"error": "You must be a superuser to view all users."}, status=status.HTTP_403_FORBIDDEN)
+            users = FgfUser.objects.filter(is_active=True)
+        elif request.user.is_editor:
+            users = FgfUser.objects.filter(is_active=True, is_contributor=True)
+        else:
+            return Response({"error": "You must be a superuser or editor to view users."}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
 
-    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUser | permissions.IsAuthenticated])
     def create_editor(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
@@ -54,18 +63,40 @@ class UserViewSet(viewsets.ViewSet):
         if not email or not password:
             return Response({"error": "Email and password are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = CustomUser.objects.create_user(email=email, password=password, is_editor=True)
+        user = FgfUser.objects.create_user(email=email, password=password, is_editor=True)
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUser | permissions.IsAuthenticated])
+    def create_contributor(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        if not email or not password:
+            return Response({"error": "Email and password are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = FgfUser.objects.create_user(email=email, password=password, is_contributor=True)
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def list_contributors(self, request):
+        contributors = FgfUser.objects.filter(is_contributor=True, is_verified=True)
+        serializer = UserSerializer(contributors, many=True)
+        return Response(serializer.data)
+
+    def list_editors(self, request):
+        editors = FgfUser.objects.filter(is_editor=True)
+        serializer = UserSerializer(editors, many=True)
+        return Response(serializer.data)
 
 # Email Verification View
 class VerifyEmailView(APIView):
     permission_classes = [permissions.AllowAny]
 
-    def get(self, request, pk, token, *args, **kwargs):
+    def get(self, request, user_id, token, *args, **kwargs):
         try:
-            user = CustomUser.objects.get(pk=pk)
-        except CustomUser.DoesNotExist:
+            user = FgfUser.objects.get(pk=user_id)
+        except FgfUser.DoesNotExist:
             return Response({'detail': 'Invalid user.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if default_token_generator.check_token(user, token):
@@ -154,3 +185,83 @@ class VerifyEmailRedirectView(View):
         # Logic to verify the email
         # ...existing verification logic...
         return redirect('login')
+
+def verify_email(request, user_id, token):
+    user = get_object_or_404(FgfUser, pk=user_id)
+    # Add your token verification logic here
+    if token == user.verification_token:  # Example token check
+        user.is_verified = True
+        user.save()
+        return HttpResponse("Email verified successfully.")
+    else:
+        return HttpResponse("Invalid verification token.")
+
+# Profile View
+
+class UserProfileView(RetrieveUpdateAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.profile
+
+class FgfUserListCreateView(ListCreateAPIView):
+    queryset = FgfUser.objects.all()
+    serializer_class = FgfUserSerializer
+
+class FgfUserDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = FgfUser.objects.all()
+    serializer_class = FgfUserSerializer
+
+class ProfileListCreateView(ListCreateAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+
+class ProfileDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+
+#Password Reset
+class PasswordResetConfirmView(APIView):
+    def post(self, request):
+        uidb64 = request.data.get("uid")
+        token = request.data.get("token")
+        new_password = request.data.get("new_password")
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is not None and default_token_generator.check_token(user, token):
+            user.set_password(new_password)
+            user.save()
+            return Response({"detail": "Password reset successful."}, status=status.HTTP_200_OK)
+
+        return Response({"error": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+
+class PasswordResetRequestView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Generate reset token
+        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        reset_url = f"http://127.0.0.1:8000/auth/password-reset-confirm/?uid={uidb64}&token={token}"
+        
+        # Send email
+        send_mail(
+            subject="Password Reset",
+            message=f"Click the link to reset your password: {reset_url}",
+            from_email="no-reply@example.com",
+            recipient_list=[user.email],
+        )
+
+        return Response({"detail": "Password reset e-mail has been sent."}, status=status.HTTP_200_OK)
